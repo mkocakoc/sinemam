@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const tempMovieData = [
   {
@@ -56,10 +56,42 @@ export default function App() {
   const [watched, setWatched] = useState(tempWatchedData);
   const [isOpen1, setIsOpen1] = useState(true);
   const [isOpen2, setIsOpen2] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const avgImdbRating = average(watched.map((movie) => movie.imdbRating));
   const avgUserRating = average(watched.map((movie) => movie.userRating));
   const avgRuntime = average(watched.map((movie) => movie.runtime));
+  const [error, setError] = useState("");
+  const key = "7cbf98e8";
+
+
+
+  useEffect(() => {
+    async function fetchMovies() {
+      try {
+        setIsLoading(true);
+        const res = await fetch(`https://www.omdbapi.com/?s=${query}&apikey=${key}`);
+
+        if (!res.ok) {
+          throw new Error("Network response was not ok");
+        }
+        const data = await res.json();
+        setMovies(data.Search);  
+      }
+      catch (err) {    
+        setError("An error occurred. Please try again later.");
+        console.error(err.message);
+      }
+      finally {
+        setIsLoading(false);
+      }
+
+    }
+    fetchMovies();
+  }, [query]);
+
+
+
 
   return (
     <>
@@ -76,12 +108,15 @@ export default function App() {
           onChange={(e) => setQuery(e.target.value)}
         />
         <p className="num-results">
-          Found <strong>{movies.length}</strong> results
+          Found <strong>{movies?.length}</strong> results
         </p>
       </nav>
 
       <main className="main">
+
         <div className="box">
+          {isLoading && <p className="loader">Loading...</p>}
+          {error && <p className="error">{error}</p>}
           <button
             className="btn-toggle"
             onClick={() => setIsOpen1((open) => !open)}
